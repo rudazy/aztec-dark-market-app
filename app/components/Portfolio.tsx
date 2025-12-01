@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MockWallet } from '../lib/mockWallet';
+import { AccountWallet } from '@aztec/aztec.js';
+import { TokenContract } from '../contracts/Token';
+import { PrivateOrderBookContract } from '../contracts/PrivateOrderBook';
 
 interface Asset {
   symbol: string;
@@ -20,7 +22,7 @@ interface Transaction {
 }
 
 interface PortfolioProps {
-  wallet: MockWallet | null;
+  wallet: AccountWallet | null;
 }
 
 export default function Portfolio({ wallet }: PortfolioProps) {
@@ -38,74 +40,60 @@ export default function Portfolio({ wallet }: PortfolioProps) {
   }, [wallet]);
 
   const loadPortfolio = async () => {
+    if (!wallet) return;
+
     setIsLoading(true);
 
     try {
-      // TODO: Fetch actual balances from Token contract
-      // TODO: Fetch transaction history from OrderBook contract
+      // Fetch actual balance from Token contract
+      const tokenContract = await TokenContract.at(wallet);
+      const userAddress = wallet.getAddress();
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const balanceRaw = await tokenContract.balanceOf(userAddress);
+      // Convert from smallest unit (6 decimals) to display units
+      const balance = Number(balanceRaw) / 1e6;
 
-      // Mock assets data
-      const mockAssets: Asset[] = [
-        { symbol: 'ETH', balance: 5.2341, value: 10500.23 },
-        { symbol: 'USDC', balance: 12500.50, value: 12500.50 },
-        { symbol: 'TOKEN', balance: 1000.0, value: 5000.0 },
-      ];
-
-      // Mock transaction history
-      const mockTransactions: Transaction[] = [
+      // For this example, we're only showing the main token balance
+      // In a full implementation, you'd query multiple token contracts
+      const assets: Asset[] = [
         {
-          id: '1',
-          type: 'buy',
-          amount: 10.5,
-          price: 100.0,
-          total: 1050.0,
-          timestamp: Date.now() - 3600000,
-          status: 'completed',
-        },
-        {
-          id: '2',
-          type: 'sell',
-          amount: 5.2,
-          price: 102.5,
-          total: 533.0,
-          timestamp: Date.now() - 7200000,
-          status: 'completed',
-        },
-        {
-          id: '3',
-          type: 'buy',
-          amount: 15.0,
-          price: 99.5,
-          total: 1492.5,
-          timestamp: Date.now() - 10800000,
-          status: 'completed',
-        },
-        {
-          id: '4',
-          type: 'buy',
-          amount: 8.0,
-          price: 101.0,
-          total: 808.0,
-          timestamp: Date.now() - 14400000,
-          status: 'pending',
-        },
-        {
-          id: '5',
-          type: 'sell',
-          amount: 3.5,
-          price: 100.0,
-          total: 350.0,
-          timestamp: Date.now() - 18000000,
-          status: 'failed',
+          symbol: 'TOKEN',
+          balance: balance,
+          value: balance * 5.0 // Assuming $5 per token as example
         },
       ];
 
-      setAssets(mockAssets);
-      setTransactions(mockTransactions);
+      // Fetch transaction history from OrderBook contract
+      // Note: This requires the contract to have a method to query user's orders
+      // For now, we'll show an empty array as the contract might not have this view function yet
+      const orderBookContract = await PrivateOrderBookContract.at(wallet);
+
+      // Try to get orders (this may fail if the contract doesn't support it yet)
+      let orders: any[] = [];
+      try {
+        orders = await orderBookContract.getOrders(userAddress);
+      } catch (err) {
+        console.log('Note: Unable to fetch order history. Contract may not support this view function yet.');
+      }
+
+      // Convert orders to transactions format
+      const transactions: Transaction[] = orders.map((order: any, index: number) => ({
+        id: order.id?.toString() || index.toString(),
+        type: order.isBuy ? 'buy' : 'sell',
+        amount: Number(order.amount || 0) / 1e6,
+        price: Number(order.price || 0) / 1e6,
+        total: (Number(order.amount || 0) * Number(order.price || 0)) / 1e12,
+        timestamp: Date.now() - (index * 3600000), // Placeholder timestamp
+        status: order.status === 0 ? 'pending' : order.status === 1 ? 'completed' : 'failed',
+      }));
+
+      setAssets(assets);
+      setTransactions(transactions);
     } catch (err) {
       console.error('Failed to load portfolio:', err);
+      // Set empty arrays on error
+      setAssets([]);
+      setTransactions([]);
     } finally {
       setIsLoading(false);
     }

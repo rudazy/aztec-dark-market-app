@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { MockWallet } from '../lib/mockWallet';
+import { AccountWallet } from '@aztec/aztec.js';
 import { CONTRACT_ADDRESSES, TRADING_CONFIG } from '../config';
+import { PrivateOrderBookContract } from '../contracts/PrivateOrderBook';
 
 interface TradePanelProps {
-  wallet: MockWallet | null;
+  wallet: AccountWallet | null;
 }
 
 type OrderType = 'buy' | 'sell';
@@ -44,21 +45,34 @@ export default function TradePanel({ wallet }: TradePanelProps) {
     setSuccess('');
 
     try {
-      // TODO: Implement actual order creation using OrderBook contract
-      // This is a placeholder for the actual contract interaction
+      // Get OrderBook contract instance
+      const orderBookContract = await PrivateOrderBookContract.at(wallet);
 
-      // Example contract call (to be implemented with actual contract ABIs):
-      // const orderBook = await Contract.at(CONTRACT_ADDRESSES.orderBook, OrderBookAbi, wallet);
-      // await orderBook.methods.createOrder(orderType === 'buy', amountNum, priceNum).send().wait();
+      // Convert amount and price to smallest unit (assuming 6 decimals)
+      const amountInSmallestUnit = BigInt(Math.floor(amountNum * 1e6));
+      const priceInSmallestUnit = BigInt(Math.floor(priceNum * 1e6));
 
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate transaction
+      console.log('Creating order:', {
+        orderBook: CONTRACT_ADDRESSES.orderBook.toString(),
+        type: orderType,
+        amount: amountInSmallestUnit.toString(),
+        price: priceInSmallestUnit.toString(),
+        fpc: CONTRACT_ADDRESSES.sponsoredFpc.toString(),
+      });
+
+      // Call createOrder on the contract
+      await orderBookContract.createOrder(
+        orderType === 'buy',
+        amountInSmallestUnit,
+        priceInSmallestUnit
+      );
 
       setSuccess(`${orderType.toUpperCase()} order created successfully!`);
       setAmount('');
       setPrice('');
     } catch (err) {
       setError('Failed to create order: ' + (err as Error).message);
-      console.error(err);
+      console.error('Order creation error:', err);
     } finally {
       setIsSubmitting(false);
     }

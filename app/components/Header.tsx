@@ -1,14 +1,15 @@
 'use client';
 
-import { MockWallet } from '../lib/mockWallet';
+import { AccountWallet } from '@aztec/aztec.js';
 
 interface HeaderProps {
-  wallet: MockWallet | null;
+  wallet: AccountWallet | null;
   onConnectClick: () => void;
 }
 
 export default function Header({ wallet, onConnectClick }: HeaderProps) {
-  const formatAddress = (address: string) => {
+  const formatAddress = (wallet: AccountWallet) => {
+    const address = wallet.getAddress().toString();
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
@@ -45,7 +46,7 @@ export default function Header({ wallet, onConnectClick }: HeaderProps) {
               <div className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 border border-purple-500/50 rounded-lg">
                 <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
                 <span className="text-sm font-mono text-purple-300 hidden sm:inline">
-                  {formatAddress(wallet.address)}
+                  {formatAddress(wallet)}
                 </span>
                 <span className="text-sm font-mono text-purple-300 sm:hidden">
                   Connected

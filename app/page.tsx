@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { MockWallet } from './lib/mockWallet';
+import { AccountWallet } from '@aztec/aztec.js';
 import Header from './components/Header';
 import WalletConnect from './components/WalletConnect';
 import TradePanel from './components/TradePanel';
@@ -11,7 +11,7 @@ import MobileTabs from './components/MobileTabs';
 import Footer from './components/Footer';
 
 export default function Home() {
-  const [wallet, setWallet] = useState<MockWallet | null>(null);
+  const [wallet, setWallet] = useState<AccountWallet | null>(null);
   const [mobileTab, setMobileTab] = useState<'trade' | 'orders' | 'portfolio'>('orders');
   const walletSectionRef = useRef<HTMLDivElement>(null);
 

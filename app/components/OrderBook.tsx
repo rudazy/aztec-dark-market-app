@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MockWallet } from '../lib/mockWallet';
+import { AccountWallet } from '@aztec/aztec.js';
+import { PrivateOrderBookContract } from '../contracts/PrivateOrderBook';
 
 interface Order {
   id: string;
@@ -13,7 +14,7 @@ interface Order {
 }
 
 interface OrderBookProps {
-  wallet: MockWallet | null;
+  wallet: AccountWallet | null;
 }
 
 export default function OrderBook({ wallet }: OrderBookProps) {
@@ -30,37 +31,56 @@ export default function OrderBook({ wallet }: OrderBookProps) {
   }, [wallet]);
 
   const loadOrders = async () => {
+    if (!wallet) return;
+
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Note: In a private DEX, viewing all orders from all users might not be possible
+      // due to privacy constraints. This implementation will attempt to fetch orders
+      // but may need to be updated based on the actual contract implementation.
 
-      // Mock buy orders (sorted by price descending)
-      const mockBuyOrders: Order[] = [
-        { id: '1', type: 'buy', price: 100.5, amount: 2.5, total: 251.25, timestamp: Date.now() - 10000 },
-        { id: '2', type: 'buy', price: 100.0, amount: 1.8, total: 180.0, timestamp: Date.now() - 20000 },
-        { id: '3', type: 'buy', price: 99.5, amount: 3.2, total: 318.4, timestamp: Date.now() - 30000 },
-        { id: '4', type: 'buy', price: 99.0, amount: 1.5, total: 148.5, timestamp: Date.now() - 40000 },
-        { id: '5', type: 'buy', price: 98.5, amount: 2.0, total: 197.0, timestamp: Date.now() - 50000 },
-        { id: '6', type: 'buy', price: 98.0, amount: 1.3, total: 127.4, timestamp: Date.now() - 60000 },
-        { id: '7', type: 'buy', price: 97.5, amount: 2.8, total: 273.0, timestamp: Date.now() - 70000 },
-      ];
+      const orderBookContract = await PrivateOrderBookContract.at(wallet);
 
-      // Mock sell orders (sorted by price ascending)
-      const mockSellOrders: Order[] = [
-        { id: '8', type: 'sell', price: 101.0, amount: 1.2, total: 121.2, timestamp: Date.now() - 15000 },
-        { id: '9', type: 'sell', price: 101.5, amount: 2.0, total: 203.0, timestamp: Date.now() - 25000 },
-        { id: '10', type: 'sell', price: 102.0, amount: 1.7, total: 173.4, timestamp: Date.now() - 35000 },
-        { id: '11', type: 'sell', price: 102.5, amount: 3.0, total: 307.5, timestamp: Date.now() - 45000 },
-        { id: '12', type: 'sell', price: 103.0, amount: 1.1, total: 113.3, timestamp: Date.now() - 55000 },
-        { id: '13', type: 'sell', price: 103.5, amount: 2.4, total: 248.4, timestamp: Date.now() - 65000 },
-        { id: '14', type: 'sell', price: 104.0, amount: 1.9, total: 197.6, timestamp: Date.now() - 75000 },
-      ];
+      // Try to get user's own orders (this is what we can see in a private order book)
+      let userOrders: any[] = [];
+      try {
+        userOrders = await orderBookContract.getOrders(wallet.getAddress());
+      } catch (err) {
+        console.log('Note: Unable to fetch order book. Contract may not support public order viewing.');
+      }
 
-      setBuyOrders(mockBuyOrders);
-      setSellOrders(mockSellOrders);
+      // Separate into buy and sell orders
+      const buyOrdersList: Order[] = [];
+      const sellOrdersList: Order[] = [];
+
+      userOrders.forEach((order: any) => {
+        const orderData: Order = {
+          id: order.id?.toString() || Math.random().toString(),
+          type: order.isBuy ? 'buy' : 'sell',
+          price: Number(order.price || 0) / 1e6,
+          amount: Number(order.amount || 0) / 1e6,
+          total: (Number(order.amount || 0) * Number(order.price || 0)) / 1e12,
+          timestamp: Date.now(), // Placeholder - contract would need to store this
+        };
+
+        if (order.isBuy) {
+          buyOrdersList.push(orderData);
+        } else {
+          sellOrdersList.push(orderData);
+        }
+      });
+
+      // Sort orders: buy orders by price descending, sell orders by price ascending
+      buyOrdersList.sort((a, b) => b.price - a.price);
+      sellOrdersList.sort((a, b) => a.price - b.price);
+
+      setBuyOrders(buyOrdersList);
+      setSellOrders(sellOrdersList);
     } catch (err) {
       console.error('Failed to load orders:', err);
+      setBuyOrders([]);
+      setSellOrders([]);
     } finally {
       setIsLoading(false);
     }

@@ -55,14 +55,14 @@ export default function Footer() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-purple-400">Token Contract</span>
                   <button
-                    onClick={() => copyToClipboard(CONTRACT_ADDRESSES.token, 'Token')}
+                    onClick={() => copyToClipboard(CONTRACT_ADDRESSES.token.toString(), 'Token')}
                     className="text-xs text-gray-500 hover:text-purple-400 transition-colors"
                   >
                     Copy
                   </button>
                 </div>
                 <div className="font-mono text-xs text-gray-400 bg-gray-900/50 p-2 rounded border border-gray-700/50 break-all">
-                  {CONTRACT_ADDRESSES.token}
+                  {CONTRACT_ADDRESSES.token.toString()}
                 </div>
               </div>
 
@@ -71,14 +71,14 @@ export default function Footer() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-purple-400">Escrow Contract</span>
                   <button
-                    onClick={() => copyToClipboard(CONTRACT_ADDRESSES.escrow, 'Escrow')}
+                    onClick={() => copyToClipboard(CONTRACT_ADDRESSES.escrow.toString(), 'Escrow')}
                     className="text-xs text-gray-500 hover:text-purple-400 transition-colors"
                   >
                     Copy
                   </button>
                 </div>
                 <div className="font-mono text-xs text-gray-400 bg-gray-900/50 p-2 rounded border border-gray-700/50 break-all">
-                  {CONTRACT_ADDRESSES.escrow}
+                  {CONTRACT_ADDRESSES.escrow.toString()}
                 </div>
               </div>
 
@@ -87,14 +87,14 @@ export default function Footer() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-purple-400">OrderBook Contract</span>
                   <button
-                    onClick={() => copyToClipboard(CONTRACT_ADDRESSES.orderBook, 'OrderBook')}
+                    onClick={() => copyToClipboard(CONTRACT_ADDRESSES.orderBook.toString(), 'OrderBook')}
                     className="text-xs text-gray-500 hover:text-purple-400 transition-colors"
                   >
                     Copy
                   </button>
                 </div>
                 <div className="font-mono text-xs text-gray-400 bg-gray-900/50 p-2 rounded border border-gray-700/50 break-all">
-                  {CONTRACT_ADDRESSES.orderBook}
+                  {CONTRACT_ADDRESSES.orderBook.toString()}
                 </div>
               </div>
 
@@ -103,14 +103,14 @@ export default function Footer() {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-purple-400">Sponsored FPC</span>
                   <button
-                    onClick={() => copyToClipboard(CONTRACT_ADDRESSES.sponsoredFpc, 'FPC')}
+                    onClick={() => copyToClipboard(CONTRACT_ADDRESSES.sponsoredFpc.toString(), 'FPC')}
                     className="text-xs text-gray-500 hover:text-purple-400 transition-colors"
                   >
                     Copy
                   </button>
                 </div>
                 <div className="font-mono text-xs text-gray-400 bg-gray-900/50 p-2 rounded border border-gray-700/50 break-all">
-                  {CONTRACT_ADDRESSES.sponsoredFpc}
+                  {CONTRACT_ADDRESSES.sponsoredFpc.toString()}
                 </div>
               </div>
 
