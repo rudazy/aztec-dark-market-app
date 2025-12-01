@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AccountWallet } from '@aztec/aztec.js';
-import { PrivateOrderBookContract } from '../contracts/PrivateOrderBook';
+import { getOrders } from '../lib/api';
 
 interface Order {
   id: string;
@@ -14,54 +13,43 @@ interface Order {
 }
 
 interface OrderBookProps {
-  wallet: AccountWallet | null;
+  address: string | null;
 }
 
-export default function OrderBook({ wallet }: OrderBookProps) {
+export default function OrderBook({ address }: OrderBookProps) {
   const [buyOrders, setBuyOrders] = useState<Order[]>([]);
   const [sellOrders, setSellOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (wallet) {
+    if (address) {
       loadOrders();
       const interval = setInterval(loadOrders, 10000);
       return () => clearInterval(interval);
     }
-  }, [wallet]);
+  }, [address]);
 
   const loadOrders = async () => {
-    if (!wallet) return;
+    if (!address) return;
 
     setIsLoading(true);
 
     try {
-      // Note: In a private DEX, viewing all orders from all users might not be possible
-      // due to privacy constraints. This implementation will attempt to fetch orders
-      // but may need to be updated based on the actual contract implementation.
-
-      const orderBookContract = await PrivateOrderBookContract.at(wallet);
-
-      // Try to get user's own orders (this is what we can see in a private order book)
-      let userOrders: any[] = [];
-      try {
-        userOrders = await orderBookContract.getOrders(wallet.getAddress());
-      } catch (err) {
-        console.log('Note: Unable to fetch order book. Contract may not support public order viewing.');
-      }
+      // Fetch orders from API
+      const response = await getOrders();
 
       // Separate into buy and sell orders
       const buyOrdersList: Order[] = [];
       const sellOrdersList: Order[] = [];
 
-      userOrders.forEach((order: any) => {
+      response.orders.forEach((order) => {
         const orderData: Order = {
-          id: order.id?.toString() || Math.random().toString(),
+          id: order.id,
           type: order.isBuy ? 'buy' : 'sell',
-          price: Number(order.price || 0) / 1e6,
-          amount: Number(order.amount || 0) / 1e6,
-          total: (Number(order.amount || 0) * Number(order.price || 0)) / 1e12,
-          timestamp: Date.now(), // Placeholder - contract would need to store this
+          price: parseFloat(order.price),
+          amount: parseFloat(order.amount),
+          total: parseFloat(order.amount) * parseFloat(order.price),
+          timestamp: Date.now(), // Placeholder - API would need to provide this
         };
 
         if (order.isBuy) {
@@ -107,7 +95,7 @@ export default function OrderBook({ wallet }: OrderBookProps) {
         )}
       </div>
 
-      {!wallet ? (
+      {!address ? (
         <div className="text-center text-gray-500 py-12 bg-gray-800/30 rounded-lg border border-gray-700/50">
           <div className="text-4xl mb-3">🔒</div>
           <p className="text-lg mb-2">Connect Your Wallet</p>

@@ -1,17 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { AccountWallet } from '@aztec/aztec.js';
-import { CONTRACT_ADDRESSES, TRADING_CONFIG } from '../config';
-import { PrivateOrderBookContract } from '../contracts/PrivateOrderBook';
+import { createOrder } from '../lib/api';
+import { TRADING_CONFIG } from '../config';
 
 interface TradePanelProps {
-  wallet: AccountWallet | null;
+  address: string | null;
 }
 
 type OrderType = 'buy' | 'sell';
 
-export default function TradePanel({ wallet }: TradePanelProps) {
+export default function TradePanel({ address }: TradePanelProps) {
   const [orderType, setOrderType] = useState<OrderType>('buy');
   const [amount, setAmount] = useState('');
   const [price, setPrice] = useState('');
@@ -22,7 +21,7 @@ export default function TradePanel({ wallet }: TradePanelProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!wallet) {
+    if (!address) {
       setError('Please connect your wallet first');
       return;
     }
@@ -45,29 +44,16 @@ export default function TradePanel({ wallet }: TradePanelProps) {
     setSuccess('');
 
     try {
-      // Get OrderBook contract instance
-      const orderBookContract = await PrivateOrderBookContract.at(wallet);
-
-      // Convert amount and price to smallest unit (assuming 6 decimals)
-      const amountInSmallestUnit = BigInt(Math.floor(amountNum * 1e6));
-      const priceInSmallestUnit = BigInt(Math.floor(priceNum * 1e6));
-
       console.log('Creating order:', {
-        orderBook: CONTRACT_ADDRESSES.orderBook.toString(),
         type: orderType,
-        amount: amountInSmallestUnit.toString(),
-        price: priceInSmallestUnit.toString(),
-        fpc: CONTRACT_ADDRESSES.sponsoredFpc.toString(),
+        amount: amount,
+        price: price,
       });
 
-      // Call createOrder on the contract
-      await orderBookContract.createOrder(
-        orderType === 'buy',
-        amountInSmallestUnit,
-        priceInSmallestUnit
-      );
+      // Call API to create order
+      const response = await createOrder(orderType === 'buy', amount, price);
 
-      setSuccess(`${orderType.toUpperCase()} order created successfully!`);
+      setSuccess(`${orderType.toUpperCase()} order created successfully! Order ID: ${response.orderId}`);
       setAmount('');
       setPrice('');
     } catch (err) {
@@ -166,7 +152,7 @@ export default function TradePanel({ wallet }: TradePanelProps) {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={!wallet || isSubmitting}
+          disabled={!address || isSubmitting}
           className={`w-full font-medium py-3 px-4 rounded-lg transition-colors ${
             orderType === 'buy'
               ? 'bg-green-600 hover:bg-green-700 disabled:bg-gray-700'
@@ -175,7 +161,7 @@ export default function TradePanel({ wallet }: TradePanelProps) {
         >
           {isSubmitting
             ? 'Processing...'
-            : !wallet
+            : !address
             ? 'Connect Wallet First'
             : `${orderType.toUpperCase()}`}
         </button>

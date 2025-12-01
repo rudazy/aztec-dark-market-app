@@ -1,42 +1,39 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createPXEClient, PXE, AccountWallet, Fr, GrumpkinScalar } from '@aztec/aztec.js';
-import { getSchnorrAccount } from '@aztec/accounts/schnorr';
-import { NETWORK_CONFIG, CONTRACT_ADDRESSES } from '../config';
+import { connectWallet as apiConnectWallet, getHealth } from '../lib/api';
 
 interface WalletConnectProps {
-  onWalletChange: (wallet: AccountWallet | null) => void;
+  onWalletChange: (address: string | null) => void;
 }
 
 export default function WalletConnect({ onWalletChange }: WalletConnectProps) {
-  const [pxe, setPxe] = useState<PXE | null>(null);
-  const [wallet, setWallet] = useState<AccountWallet | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
   const [secretKey, setSecretKey] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
-  const [address, setAddress] = useState('');
   const [status, setStatus] = useState('');
+  const [apiHealthy, setApiHealthy] = useState(false);
 
   useEffect(() => {
-    const initPXE = async () => {
+    const checkApiHealth = async () => {
       try {
-        setStatus('Connecting to PXE...');
-        const client = createPXEClient(NETWORK_CONFIG.pxeUrl);
-        setPxe(client);
-        setStatus('PXE connected');
+        setStatus('Connecting to API backend...');
+        await getHealth();
+        setApiHealthy(true);
+        setStatus('API backend connected');
       } catch (err) {
-        setError('Failed to connect to PXE: ' + (err as Error).message);
+        setError('Failed to connect to API backend: ' + (err as Error).message);
         console.error(err);
       }
     };
 
-    initPXE();
+    checkApiHealth();
   }, []);
 
-  const connectWallet = async () => {
-    if (!pxe) {
-      setError('PXE not initialized. Please wait...');
+  const handleConnectWallet = async () => {
+    if (!apiHealthy) {
+      setError('API backend not ready. Please wait...');
       return;
     }
 
@@ -55,50 +52,17 @@ export default function WalletConnect({ onWalletChange }: WalletConnectProps) {
     setStatus('');
 
     try {
-      // Convert secret key to Fr for encryption
-      setStatus('Deriving account from secret key...');
-      const encryptionPrivateKey = Fr.fromString(secretKey);
+      setStatus('Connecting wallet via API...');
+      const response = await apiConnectWallet(secretKey);
 
-      // Get Schnorr account (the signing key is derived from the encryption key)
-      setStatus('Creating Schnorr account...');
-      const account = await getSchnorrAccount(pxe, encryptionPrivateKey, GrumpkinScalar.fromString(secretKey));
-
-      // Get the account's address
-      const accountAddress = account.getAddress();
-      setStatus(`Account address: ${accountAddress.toString()}`);
-
-      // Check if account is already registered
-      setStatus('Checking account registration...');
-      const registeredAccounts = await pxe.getRegisteredAccounts();
-      const isRegistered = registeredAccounts.some(
-        (acc) => acc.address.toString() === accountAddress.toString()
-      );
-
-      if (!isRegistered) {
-        setStatus('Registering account with PXE...');
-        await account.register();
-        setStatus('Account registered successfully');
-      } else {
-        setStatus('Account already registered');
-      }
-
-      // Get the wallet
-      setStatus('Getting wallet instance...');
-      const accountWallet = await account.getWallet();
-
-      // Set up sponsored FPC
-      setStatus('Setting up sponsored fee payment...');
-      // Note: FPC setup depends on your contract's FPC implementation
-      // This is a placeholder - adjust based on your FPC contract interface
-
-      setWallet(accountWallet);
-      setAddress(accountAddress.toString());
-      onWalletChange(accountWallet);
+      setAddress(response.address);
+      onWalletChange(response.address);
       setStatus('Wallet connected successfully!');
 
       // Save to localStorage for convenience
       if (typeof window !== 'undefined') {
         localStorage.setItem('aztec_secret_key', secretKey);
+        localStorage.setItem('aztec_address', response.address);
       }
     } catch (err) {
       const errorMessage = (err as Error).message;
@@ -111,30 +75,34 @@ export default function WalletConnect({ onWalletChange }: WalletConnectProps) {
   };
 
   const disconnectWallet = () => {
-    setWallet(null);
-    setAddress('');
+    setAddress(null);
     setSecretKey('');
     setStatus('');
     onWalletChange(null);
 
     if (typeof window !== 'undefined') {
       localStorage.removeItem('aztec_secret_key');
+      localStorage.removeItem('aztec_address');
     }
   };
 
   // Auto-load from localStorage on mount
   useEffect(() => {
     const savedKey = localStorage.getItem('aztec_secret_key');
-    if (savedKey && pxe && !wallet) {
+    const savedAddress = localStorage.getItem('aztec_address');
+    if (savedKey && savedAddress && apiHealthy && !address) {
       setSecretKey(savedKey);
+      setAddress(savedAddress);
+      onWalletChange(savedAddress);
+      setStatus('Wallet loaded from session');
     }
-  }, [pxe, wallet]);
+  }, [apiHealthy, address, onWalletChange]);
 
   return (
     <div className="bg-gray-900 border border-purple-700/30 rounded-xl p-6 shadow-xl">
       <h2 className="text-2xl font-bold text-purple-300 mb-6">Wallet</h2>
 
-      {!wallet ? (
+      {!address ? (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -144,7 +112,7 @@ export default function WalletConnect({ onWalletChange }: WalletConnectProps) {
               type="password"
               value={secretKey}
               onChange={(e) => setSecretKey(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && connectWallet()}
+              onKeyPress={(e) => e.key === 'Enter' && handleConnectWallet()}
               placeholder="0x..."
               className="w-full px-3 py-2 bg-gray-800 border border-purple-700/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 font-mono text-sm"
             />
@@ -166,8 +134,8 @@ export default function WalletConnect({ onWalletChange }: WalletConnectProps) {
           )}
 
           <button
-            onClick={connectWallet}
-            disabled={isConnecting || !secretKey || !pxe}
+            onClick={handleConnectWallet}
+            disabled={isConnecting || !secretKey || !apiHealthy}
             className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-all shadow-lg"
           >
             {isConnecting ? (
@@ -175,8 +143,8 @@ export default function WalletConnect({ onWalletChange }: WalletConnectProps) {
                 <div className="spinner"></div>
                 Connecting...
               </span>
-            ) : !pxe ? (
-              'Connecting to PXE...'
+            ) : !apiHealthy ? (
+              'Connecting to API...'
             ) : (
               'Connect Wallet'
             )}

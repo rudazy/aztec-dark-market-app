@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AccountWallet } from '@aztec/aztec.js';
-import { TokenContract } from '../contracts/Token';
-import { PrivateOrderBookContract } from '../contracts/PrivateOrderBook';
+import { getBalance, getOrders } from '../lib/api';
 
 interface Asset {
   symbol: string;
@@ -22,39 +20,34 @@ interface Transaction {
 }
 
 interface PortfolioProps {
-  wallet: AccountWallet | null;
+  address: string | null;
 }
 
-export default function Portfolio({ wallet }: PortfolioProps) {
+export default function Portfolio({ address }: PortfolioProps) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'assets' | 'history'>('assets');
 
   useEffect(() => {
-    if (wallet) {
+    if (address) {
       loadPortfolio();
       const interval = setInterval(loadPortfolio, 15000); // Refresh every 15 seconds
       return () => clearInterval(interval);
     }
-  }, [wallet]);
+  }, [address]);
 
   const loadPortfolio = async () => {
-    if (!wallet) return;
+    if (!address) return;
 
     setIsLoading(true);
 
     try {
-      // Fetch actual balance from Token contract
-      const tokenContract = await TokenContract.at(wallet);
-      const userAddress = wallet.getAddress();
-
-      const balanceRaw = await tokenContract.balanceOf(userAddress);
-      // Convert from smallest unit (6 decimals) to display units
-      const balance = Number(balanceRaw) / 1e6;
+      // Fetch balance from API
+      const balanceResponse = await getBalance();
+      const balance = parseFloat(balanceResponse.balance);
 
       // For this example, we're only showing the main token balance
-      // In a full implementation, you'd query multiple token contracts
       const assets: Asset[] = [
         {
           symbol: 'TOKEN',
@@ -63,29 +56,24 @@ export default function Portfolio({ wallet }: PortfolioProps) {
         },
       ];
 
-      // Fetch transaction history from OrderBook contract
-      // Note: This requires the contract to have a method to query user's orders
-      // For now, we'll show an empty array as the contract might not have this view function yet
-      const orderBookContract = await PrivateOrderBookContract.at(wallet);
-
-      // Try to get orders (this may fail if the contract doesn't support it yet)
-      let orders: any[] = [];
+      // Fetch transaction history from API
+      let transactions: Transaction[] = [];
       try {
-        orders = await orderBookContract.getOrders(userAddress);
-      } catch (err) {
-        console.log('Note: Unable to fetch order history. Contract may not support this view function yet.');
-      }
+        const ordersResponse = await getOrders();
 
-      // Convert orders to transactions format
-      const transactions: Transaction[] = orders.map((order: any, index: number) => ({
-        id: order.id?.toString() || index.toString(),
-        type: order.isBuy ? 'buy' : 'sell',
-        amount: Number(order.amount || 0) / 1e6,
-        price: Number(order.price || 0) / 1e6,
-        total: (Number(order.amount || 0) * Number(order.price || 0)) / 1e12,
-        timestamp: Date.now() - (index * 3600000), // Placeholder timestamp
-        status: order.status === 0 ? 'pending' : order.status === 1 ? 'completed' : 'failed',
-      }));
+        // Convert orders to transactions format
+        transactions = ordersResponse.orders.map((order, index) => ({
+          id: order.id,
+          type: order.isBuy ? 'buy' : 'sell',
+          amount: parseFloat(order.amount),
+          price: parseFloat(order.price),
+          total: parseFloat(order.amount) * parseFloat(order.price),
+          timestamp: Date.now() - (index * 3600000), // Placeholder timestamp
+          status: order.status === 0 ? 'pending' : order.status === 1 ? 'completed' : 'failed',
+        }));
+      } catch (err) {
+        console.log('Note: Unable to fetch order history:', err);
+      }
 
       setAssets(assets);
       setTransactions(transactions);
@@ -115,7 +103,7 @@ export default function Portfolio({ wallet }: PortfolioProps) {
         )}
       </div>
 
-      {!wallet ? (
+      {!address ? (
         <div className="text-center text-gray-500 py-8">
           Connect your wallet to view your portfolio
         </div>

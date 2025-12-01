@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { AccountWallet } from '@aztec/aztec.js';
 import Header from './components/Header';
 import WalletConnect from './components/WalletConnect';
 import TradePanel from './components/TradePanel';
@@ -11,7 +10,7 @@ import MobileTabs from './components/MobileTabs';
 import Footer from './components/Footer';
 
 export default function Home() {
-  const [wallet, setWallet] = useState<AccountWallet | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<'trade' | 'orders' | 'portfolio'>('orders');
   const walletSectionRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +23,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950">
       {/* Header */}
-      <Header wallet={wallet} onConnectClick={handleConnectClick} />
+      <Header address={address} onConnectClick={handleConnectClick} />
 
       {/* Mobile Tabs */}
       <MobileTabs activeTab={mobileTab} onTabChange={setMobileTab} />
@@ -36,19 +35,19 @@ export default function Home() {
           {/* Left Column - Trade Panel (Wallet + Buy/Sell Form) */}
           <div className="lg:col-span-3 space-y-6">
             <div ref={walletSectionRef}>
-              <WalletConnect onWalletChange={setWallet} />
+              <WalletConnect onWalletChange={setAddress} />
             </div>
-            <TradePanel wallet={wallet} />
+            <TradePanel address={address} />
           </div>
 
           {/* Center Column - Order Book (Larger, Main Focus) */}
           <div className="lg:col-span-6">
-            <OrderBook wallet={wallet} />
+            <OrderBook address={address} />
           </div>
 
           {/* Right Column - Portfolio */}
           <div className="lg:col-span-3">
-            <Portfolio wallet={wallet} />
+            <Portfolio address={address} />
           </div>
         </div>
 
@@ -57,21 +56,21 @@ export default function Home() {
           {mobileTab === 'trade' && (
             <div className="space-y-6">
               <div ref={walletSectionRef}>
-                <WalletConnect onWalletChange={setWallet} />
+                <WalletConnect onWalletChange={setAddress} />
               </div>
-              <TradePanel wallet={wallet} />
+              <TradePanel address={address} />
             </div>
           )}
 
           {mobileTab === 'orders' && (
             <div>
-              <OrderBook wallet={wallet} />
+              <OrderBook address={address} />
             </div>
           )}
 
           {mobileTab === 'portfolio' && (
             <div>
-              <Portfolio wallet={wallet} />
+              <Portfolio address={address} />
             </div>
           )}
         </div>
