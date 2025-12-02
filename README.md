@@ -200,11 +200,13 @@ This repository contains:
 
 ## Screenshots
 
-Screenshots of the application interface will be added here to showcase:
+Screenshots of the application interface is added here to showcase:
 - Wallet connection flow
 - Order book interface
 - Trade execution panel
 - Portfolio dashboard
+<img width="1366" height="588" alt="image" src="https://github.com/user-attachments/assets/9cf09486-db32-43e5-93e7-4848645fe391" />
+
 
 ## Development Notes
 
