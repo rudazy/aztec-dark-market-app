@@ -78,7 +78,6 @@ export default function Home() {
         {/* Features Section */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-gray-900/50 border border-purple-700/30 rounded-xl p-6 hover:border-purple-600/50 transition-all card-hover">
-            <div className="text-4xl mb-3">🔒</div>
             <h3 className="text-lg font-semibold text-purple-300 mb-2">Private Trading</h3>
             <p className="text-sm text-gray-400">
               All trades are encrypted and private on Aztec Network. Your trading activity remains confidential.
@@ -86,7 +85,6 @@ export default function Home() {
           </div>
 
           <div className="bg-gray-900/50 border border-purple-700/30 rounded-xl p-6 hover:border-purple-600/50 transition-all card-hover">
-            <div className="text-4xl mb-3">⚡</div>
             <h3 className="text-lg font-semibold text-purple-300 mb-2">Fast Settlement</h3>
             <p className="text-sm text-gray-400">
               Instant order matching with secure escrow ensures fast and reliable trade execution.
@@ -94,7 +92,6 @@ export default function Home() {
           </div>
 
           <div className="bg-gray-900/50 border border-purple-700/30 rounded-xl p-6 hover:border-purple-600/50 transition-all card-hover">
-            <div className="text-4xl mb-3">🛡️</div>
             <h3 className="text-lg font-semibold text-purple-300 mb-2">Sponsored Fees</h3>
             <p className="text-sm text-gray-400">
               Gas fees covered by fee payment contract, making trading more accessible.

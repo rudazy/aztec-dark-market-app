@@ -97,7 +97,6 @@ export default function OrderBook({ address }: OrderBookProps) {
 
       {!address ? (
         <div className="text-center text-gray-500 py-12 bg-gray-800/30 rounded-lg border border-gray-700/50">
-          <div className="text-4xl mb-3">🔒</div>
           <p className="text-lg mb-2">Connect Your Wallet</p>
           <p className="text-sm text-gray-600">View live order book and start trading</p>
         </div>

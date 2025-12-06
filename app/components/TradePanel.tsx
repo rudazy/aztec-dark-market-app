@@ -169,7 +169,7 @@ export default function TradePanel({ address }: TradePanelProps) {
 
       {/* Privacy Notice */}
       <div className="mt-4 text-xs text-purple-400 bg-purple-900/20 border border-purple-700/30 rounded-lg p-3">
-        🔒 Your trades are private and encrypted on Aztec Network
+        Your trades are private and encrypted on Aztec Network
       </div>
     </div>
   );

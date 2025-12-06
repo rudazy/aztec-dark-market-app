@@ -232,7 +232,7 @@ export default function Portfolio({ address }: PortfolioProps) {
 
           {/* Privacy Notice */}
           <div className="mt-6 text-xs text-purple-400 bg-purple-900/20 border border-purple-700/30 rounded-lg p-3">
-            🔒 All balances and transactions are private on Aztec Network
+            All balances and transactions are private on Aztec Network
           </div>
         </div>
       )}

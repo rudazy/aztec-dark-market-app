@@ -187,7 +187,7 @@ export default function WalletConnect({ onWalletChange }: WalletConnectProps) {
       )}
 
       <div className="mt-4 text-xs text-purple-400 bg-purple-900/20 border border-purple-700/30 rounded-lg p-3">
-        🔒 Using Sponsored FPC for gas-free transactions
+        Using Sponsored FPC for gas-free transactions
       </div>
     </div>
   );

@@ -25,7 +25,6 @@ export default function Footer() {
             className="w-full flex items-center justify-between p-4 bg-gray-800/50 hover:bg-gray-800/70 rounded-lg border border-purple-700/30 transition-all"
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📜</span>
               <div className="text-left">
                 <h3 className="font-semibold text-purple-300">Contract Addresses</h3>
                 <p className="text-xs text-gray-500">View deployed contracts on Devnet</p>
@@ -162,7 +161,7 @@ export default function Footer() {
           </p>
 
           <div className="text-xs text-purple-400 bg-purple-900/20 border border-purple-700/30 rounded-lg px-4 py-2 inline-block">
-            🔒 All transactions are private and encrypted on Aztec Network
+            All transactions are private and encrypted on Aztec Network
           </div>
         </div>
       </div>
