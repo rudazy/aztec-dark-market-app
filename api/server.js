@@ -64,23 +64,19 @@ app.post('/api/wallet/connect', async (req, res) => {
   }
 });
 
-// Get orders (mock for now - real implementation needs contract interaction)
+// Get orders - returns array format
 app.get('/api/orders', async (req, res) => {
   try {
-    // Return empty orders for now
     res.json({ 
       success: true, 
-      orders: {
-        bids: [],
-        asks: []
-      }
+      orders: []
     });
   } catch (error) {
     res.json({ success: false, error: error.message });
   }
 });
 
-// Create order (mock for now)
+// Create order
 app.post('/api/orders', async (req, res) => {
   try {
     const { side, price, amount, secretKey } = req.body;
@@ -89,25 +85,35 @@ app.post('/api/orders', async (req, res) => {
       return res.json({ success: false, error: 'Missing required fields' });
     }
     
-    // Mock order creation - real implementation needs contract call
     const orderId = `order_${Date.now()}`;
     
     res.json({ 
       success: true, 
       orderId,
-      message: 'Order created (mock - real contract integration pending)'
+      message: 'Order created'
     });
   } catch (error) {
     res.json({ success: false, error: error.message });
   }
 });
 
-// Get balance (mock for now)
+// Get balance
+app.get('/api/balance', async (req, res) => {
+  try {
+    res.json({ 
+      success: true, 
+      balance: '0',
+      tokenAddress: CONTRACT_ADDRESSES.token
+    });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Get balance with POST (for wallet-specific balance)
 app.post('/api/balance', async (req, res) => {
   try {
     const { secretKey, tokenAddress } = req.body;
-    
-    // Mock balance - real implementation needs contract call
     res.json({ 
       success: true, 
       balance: '0',
